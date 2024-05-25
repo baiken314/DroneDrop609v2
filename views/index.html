@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DroneDrop609 - Make an Order</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <link href="./css/styles.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+</head>
+<body>
+    <div id="app">
+        <form id="order-form">
+            <h1 style="text-align: left; font-size: 40px;">📦 Drone Drop 609 - Air delivery</h1>
+            <p class="info-text">Call 609-470-9200 for more information or to sign up as a drone pilot.</p>
+            <p class="info-text">* Services available in Galloway, Absecon, and Mays Landing, New Jersey.</p>
+            <p class="info-text">* Delivery within 2 hours. Available from 7am to 11pm.</p>
+            <p class="info-text">* You must be 21 years or older to order alcoholic beverages.</p>
+            <div id="item-selection-section" v-if="state == 'itemSelection'">
+                <div id="item-selector">
+                    <h2>📝 Select your items (up to 5)</h2>
+                    <div class="item-cards-container" style="overflow-x: scroll;">
+                        <div 
+                            class="item-card" 
+                            v-for="(item, index) in items" 
+                            :key="index" 
+                            @click="addToCart(item)"
+                            style="display: inline-block"
+                        >
+                            <img :src="item.image" :alt="item.name" height="110">
+                            <h3>{{ item.name }}</h3>
+                            <p>Price: ${{ item.price.toFixed(2) }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="cart">
+                    <h2>🛒 Your cart {{ cart.length > 0 ? ` (${cart.length})` : '' }}</h2>
+                    <div class="item-cards-container" style="overflow-x: scroll;">
+                        <div class="item-card" v-for="(item, index) in cart" :key="index" style="display: inline-block; position: relative;">
+                            <img :src="item.image" :alt="item.name" height="110">
+                            <h3>{{ item.name }}</h3>
+                            <p style="display: inline-block">Price: ${{ item.price.toFixed(2) }}</p>
+                            <input @input="clampQuantities(false)" class="item-quantity-input number-input" type="number" v-model="item.quantity" min="0" max="10" required>
+                            <div style="position: absolute; top: 0; right: 8px;">
+                                <button type="button" @click="removeFromCart(item)" style="background-color: tomato; padding: 4px 8px;">X</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <h2>Total price: ${{ totalPrice.toFixed(2) }}</h2>
+                <button type="button" class="submit" onclick="event.preventDefault()" @click="goToCheckout">Continue to Checkout</button>
+            </div>
+            <div id="checkout-section" v-if="state != 'itemSelection'">
+                <div v-if="state == 'checkout'">
+                    <button class="button" @click="state = 'itemSelection'">&lt;&lt; Back to Items</button>
+                    <br><br>
+                    <label for="firstName">First Name</label>
+                    <input type="text" id="firstName" v-model="firstName" required autofocus="false">
+                    <br>
+                    <label for="lastName">Last Name</label>
+                    <input type="text" id="lastName" v-model="lastName" required>
+                    <br>
+                    <label for="address">Address</label>
+                    <input type="text" id="address" v-model="address" required>
+                    <br>
+                    <label for="email">Email</label>
+                    <input type="email" id="email" v-model="email" required>
+                    <br>
+                    <label for="phone">Phone</label>
+                    <input type="tel" id="phone" v-model="phone" required>
+                    <br>
+                    <label for="comments">Additional comments and/or order instructions</label>
+                    <textarea id="comments" v-model="comments"></textarea>
+                    <br>
+                </div>
+                <h2>Checkout</h2>
+                <div class="cart-summary">
+                    <ul class="cart-item-summary" v-for="(item, index) in cart" :key="index">
+                        <li style="font-weight: bold; margin-left: 30px;">{{item.quantity}} x {{ item.name }}:&nbsp;&nbsp;&nbsp;${{ (item.price * item.quantity).toFixed(2) }}</li>
+                    </ul>
+                    <!-- <p>Paypal fees: ${{ paypalFees.toFixed(2) }}</p> -->
+                </div>
+                <h3 style="margin-top: 5px;">Total: ${{ (totalPrice).toFixed(2) }}</h3>
+                <br><br>
+                <button class="submit" type="button" @click="loadPaypalButton" v-if="state == 'checkout'">Continue to Payment</button>
+                <div id="paypal-button-container" @load="loadPaypalButton" v-if="state == 'payment'"></div>
+                <div v-if="state == 'paid'">
+                    <h1>Thank you, {{ firstName }}, for your order! ✈️</h1>
+                </div>
+            </div>     
+        </form>
+    </div>
+    <!-- Sandbox -->
+    <!-- <script src="https://www.paypal.com/sdk/js?client-id=Ab7XH0UdJTli0lxzA1odka58rToU5XWQDs7GAi3RqKSewcpK1gaHIGJxAxgRkvExkphRngM_lNuZIhJO"></script> -->
+    <!-- Live -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AWffV8De_rGztyl7feilU-ZkBU8ZFULjCxPKOIPc25NUvkdS9HA87zQJxblnYzxgZqevs_EeLoRpMbMv"></script>
+    <script src="js/index.js"></script>
+</body>
+</html>

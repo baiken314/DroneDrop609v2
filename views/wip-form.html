@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Form</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <h1>Order Form</h1>
+        <form @submit.prevent="submitOrder" style="text-align:left;">
+            <label for="firstName">First Name</label>
+            <input type="text" id="firstName" v-model="firstName" required>
+            <br><br>
+            <label for="lastName">Last Name</label>
+            <input type="text" id="lastName" v-model="lastName" required>
+            <br><br>
+            <label for="address">Address</label>
+            <input type="text" id="address" v-model="address" required>
+            <br><br>
+            <label for="email">Email</label>
+            <input type="email" id="email" v-model="email" required>
+            <br><br>
+            <label for="phone">Phone</label>
+            <input type="tel" id="phone" v-model="phone" required>
+            <br><br>
+            <label for="items">Items</label>
+            <div v-for="(item, index) in items" :key="index">
+                <select v-model="item.id" required>
+                    <option v-for="option in itemOptions" :value="option.id">{{ option.name }} - ${{ option.price.toFixed(2) }}</option>
+                </select>
+                <input type="number" v-model="item.quantity" min="1" max="10" required>
+                <button type="button" @click="removeItem(index)">Remove</button>
+                <br><br>
+            </div>
+            <button type="button" @click="addItem">Add Item</button>
+            <br>
+            <label for="comments">Comments</label>
+            <textarea id="comments" v-model="comments"></textarea>
+            <br><br>
+            <div>Total price: {{ totalPrice }}</div>
+            <button type="submit">Submit Order</button>
+        </form>
+    </div>
+    <script>
+        const app = new Vue({
+            el: '#app',
+            data: {
+                firstName: '',
+                lastName: '',
+                address: '',
+                email: '',
+                phone: '',
+                items: [
+                    {id: '', quantity: '', name: ''}
+                ],
+                itemOptions: [],
+                comments: ''
+            },
+            created() {
+                this.getItemOptions();
+            },
+            methods: {
+                async getItemOptions() {
+                    console.log('getItemOptions called');
+                    const response = await fetch('/data/items');
+                    const data = await response.json();
+                    this.itemOptions = data.map(item => {
+                        return {
+                            id: item.id,
+                            name: item.name,
+                            price: item.price
+                        };
+                    });
+                    console.log(this.itemOptions);
+                },
+                async submitOrder() {
+                    console.log("Submitting order...");
+                    try {
+                        // Fetch the items so we can get the name and price for each item
+                        const response = await fetch('/data/items');
+                        const items = await response.json();
+                        this.itemOptions = items;
+
+                        const itemsWithNames = this.items.map(item => {
+                            const itemOption = this.itemOptions.find(option => option.id === item.id);
+                            return {
+                                id: item.id,
+                                name: itemOption.name,
+                                quantity: item.quantity
+                            };
+                        });
+                        
+                        // Create the order data to send to the server
+                        const orderData = {
+                            firstName: this.firstName,
+                            lastName: this.lastName,
+                            address: this.address,
+                            email: this.email,
+                            phone: this.phone,
+                            items: itemsWithNames,
+                            comments: this.comments
+                        };
+                        
+                        console.log(orderData);
+
+                        // Send the order data to the server
+                        const orderResponse = await fetch('/order/create', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(orderData)
+                        });
+                        
+                        // Handle the response from the server
+                        const orderResult = await orderResponse.json();
+                        console.log(orderResult);
+                    } catch (error) {
+                        console.error(error);
+                    }
+                },
+                addItem() {
+                    this.items.push({id: '', quantity: '', name: ''});
+                },
+                removeItem(index) {
+                    this.items.splice(index, 1);
+                }
+            },
+            computed: {
+                totalPrice() {
+                    let total = 0;
+                    for (const item of this.items) {
+                        const option = this.itemOptions.find(opt => opt.id === item.id);
+                        if (option) {
+                        total += option.price * item.quantity;
+                        }
+                    }
+                    return '$' + total.toFixed(2);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
